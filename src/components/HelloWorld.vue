@@ -1,124 +1,99 @@
-<template>
-  <div class="hello">
-    <h1>{{ msg }}</h1>
-    <p>
-      For a guide and recipes on how to configure / customize this project,<br />
-      check out the
-      <a href="https://cli.vuejs.org" target="_blank" rel="noopener"
-        >vue-cli documentation</a
-      >.
-    </p>
-    <h3>Installed CLI Plugins</h3>
-    <ul>
-      <li>
-        <a
-          href="https://github.com/vuejs/vue-cli/tree/dev/packages/%40vue/cli-plugin-babel"
-          target="_blank"
-          rel="noopener"
-          >babel</a
-        >
-      </li>
-      <li>
-        <a
-          href="https://github.com/vuejs/vue-cli/tree/dev/packages/%40vue/cli-plugin-typescript"
-          target="_blank"
-          rel="noopener"
-          >typescript</a
-        >
-      </li>
-      <li>
-        <a
-          href="https://github.com/vuejs/vue-cli/tree/dev/packages/%40vue/cli-plugin-eslint"
-          target="_blank"
-          rel="noopener"
-          >eslint</a
-        >
-      </li>
-    </ul>
-    <h3>Essential Links</h3>
-    <ul>
-      <li>
-        <a href="https://vuejs.org" target="_blank" rel="noopener">Core Docs</a>
-      </li>
-      <li>
-        <a href="https://forum.vuejs.org" target="_blank" rel="noopener"
-          >Forum</a
-        >
-      </li>
-      <li>
-        <a href="https://chat.vuejs.org" target="_blank" rel="noopener"
-          >Community Chat</a
-        >
-      </li>
-      <li>
-        <a href="https://twitter.com/vuejs" target="_blank" rel="noopener"
-          >Twitter</a
-        >
-      </li>
-      <li>
-        <a href="https://news.vuejs.org" target="_blank" rel="noopener">News</a>
-      </li>
-    </ul>
-    <h3>Ecosystem</h3>
-    <ul>
-      <li>
-        <a href="https://router.vuejs.org" target="_blank" rel="noopener"
-          >vue-router</a
-        >
-      </li>
-      <li>
-        <a href="https://vuex.vuejs.org" target="_blank" rel="noopener">vuex</a>
-      </li>
-      <li>
-        <a
-          href="https://github.com/vuejs/vue-devtools#vue-devtools"
-          target="_blank"
-          rel="noopener"
-          >vue-devtools</a
-        >
-      </li>
-      <li>
-        <a href="https://vue-loader.vuejs.org" target="_blank" rel="noopener"
-          >vue-loader</a
-        >
-      </li>
-      <li>
-        <a
-          href="https://github.com/vuejs/awesome-vue"
-          target="_blank"
-          rel="noopener"
-          >awesome-vue</a
-        >
-      </li>
-    </ul>
-  </div>
-</template>
-
 <script lang="ts">
 import Vue from "vue";
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+//@ts-ignore
+import * as THREE from "three";
+import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
+import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 
 export default Vue.extend({
   name: "HelloWorld",
-  props: {
-    msg: String,
+
+  data: () => {
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(
+      75,
+      window.innerWidth / window.innerHeight,
+      0.1,
+      1000
+    );
+    const renderer = new THREE.WebGLRenderer();
+    const controls = new OrbitControls(camera, renderer.domElement);
+
+    controls.enableDamping = true;
+    camera.position.z = 5;
+    camera.position.y = 5;
+    camera.position.x = 3;
+    controls.minDistance = 2;
+
+    return {
+      scene,
+      camera,
+      renderer,
+      controls,
+    };
+  },
+
+  mounted() {
+    this.init();
+    this.animate();
+  },
+
+  methods: {
+    init() {
+      this.renderer.setSize(window.innerWidth, window.innerHeight);
+      this.renderer.setClearColor("#613CB0");
+      this.camera.position.z = 5;
+      (this.$refs.canvas as any).appendChild(this.renderer.domElement);
+      // this.addModel();
+      this.createCube();
+    },
+    addModel() {
+      const loader = new GLTFLoader();
+      setTimeout(() => {
+        loader.load(
+          "../../public/nike/scene",
+          (gltf) => {
+            console.log(gltf);
+            // this.scene.add(gltf.scene);
+          },
+          (progress) => {
+            console.log(progress);
+          }
+        );
+      }, 0);
+    },
+    createCube() {
+      const geometry = new THREE.BoxGeometry(1, 1, 5);
+      const edges = new THREE.EdgesGeometry(geometry);
+      const line = new THREE.LineSegments(
+        edges,
+        new THREE.LineBasicMaterial({
+          color: "#000",
+        })
+      );
+      const material = new THREE.LineBasicMaterial({
+        color: "#FFCB6B",
+      });
+      const cube = new THREE.Mesh(geometry, material);
+      this.scene.add(cube, line);
+    },
+    animate() {
+      requestAnimationFrame(this.animate);
+      this.controls.update();
+      this.renderer.render(this.scene, this.camera);
+    },
   },
 });
 </script>
 
-<!-- Add "scoped" attribute to limit CSS to this component only -->
+<template>
+  <div ref="canvas" class="canvas"></div>
+</template>
+
 <style scoped>
-h3 {
-  margin: 40px 0 0;
-}
-ul {
-  list-style-type: none;
-  padding: 0;
-}
-li {
-  display: inline-block;
-  margin: 0 10px;
-}
-a {
-  color: #42b983;
+.canvas {
+  width: 100vw;
+  height: 100vh;
 }
 </style>
